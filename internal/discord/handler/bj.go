@@ -186,18 +186,18 @@ func (h *handler) stand(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(out.GameData.UserHand) > 1 {
 		// ゲームが終了している場合
 		if out.IsEnd {
-			for _, uhand := range out.GameData.UserHand {
+			for i, uhand := range out.GameData.UserHand {
 				hands = append(hands, uhand.Strings())
 				userHandValue = append(userHandValue, uhand.Score())
 
 				// 勝敗判定
 				switch uhand.Status() {
 				case hand.StatusWin:
-					s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(SplitedWinMessage, strings.Join(hands[0], ", "), strings.Join(hands[1], ", "), userHandValue[0], userHandValue[1], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
+					s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(SplitedWinMessage, i+1, strings.Join(hands[0], ", "), strings.Join(hands[1], ", "), userHandValue[0], userHandValue[1], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score()))
 				case hand.StatusLose:
-					s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(SplitedLoseMessage, strings.Join(hands[0], ", "), strings.Join(hands[1], ", "), userHandValue[0], userHandValue[1], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
+					s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(SplitedLoseMessage, i+1, strings.Join(hands[0], ", "), strings.Join(hands[1], ", "), userHandValue[0], userHandValue[1], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score()))
 				case hand.StatusDraw:
-					s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(SplitedDrawMessage, strings.Join(hands[0], ", "), strings.Join(hands[1], ", "), userHandValue[0], userHandValue[1], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
+					s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(SplitedDrawMessage, i+1, strings.Join(hands[0], ", "), strings.Join(hands[1], ", "), userHandValue[0], userHandValue[1], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score()))
 				}
 			}
 			return
@@ -228,11 +228,11 @@ func (h *handler) stand(s *discordgo.Session, m *discordgo.MessageCreate) {
 		// 勝敗判定
 		switch out.GameData.UserHand[0].Status() {
 		case hand.StatusWin:
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(WinMessage, strings.Join(hands[0], ", "), userHandValue[0], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(strings.Join(WinMessage, "\n"), strings.Join(hands[0], ", "), userHandValue[0], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
 		case hand.StatusLose:
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(LoseMessage, strings.Join(hands[0], ", "), userHandValue[0], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(strings.Join(LoseMessage, "\n"), strings.Join(hands[0], ", "), userHandValue[0], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
 		case hand.StatusDraw:
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(DrawMessage, strings.Join(hands[0], ", "), userHandValue[0], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(strings.Join(DrawMessage, "\n"), strings.Join(hands[0], ", "), userHandValue[0], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
 		}
 		return
 	}
@@ -287,7 +287,16 @@ func (h *handler) doubleDown(s *discordgo.Session, m *discordgo.MessageCreate) {
 		userHandValue += hand.Score()
 	}
 
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(DoubleDownMessage, strings.Join(hands, ", "), userHandValue))
+	switch out.GameData.UserHand[0].Status() {
+	case hand.StatusWin:
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(strings.Join(DoubleDownMessage, "\n"), strings.Join(hands, ", "), userHandValue, out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), WinResultMessage, out.UserData.Balance))
+	case hand.StatusLose:
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(strings.Join(DoubleDownMessage, "\n"), strings.Join(hands, ", "), userHandValue, out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), LoseResultMessage, out.UserData.Balance))
+	case hand.StatusDraw:
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(strings.Join(DoubleDownMessage, "\n"), strings.Join(hands, ", "), userHandValue, out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), DrawResultMessage, out.UserData.Balance))
+	default:
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(strings.Join(DoubleDownMessage, "\n"), strings.Join(hands, ", "), userHandValue, out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
+	}
 }
 
 func (h *handler) insurance(s *discordgo.Session, m *discordgo.MessageCreate) {

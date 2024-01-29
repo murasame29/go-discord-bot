@@ -206,17 +206,9 @@ func (g *game) Stand(userID string, handID int) (*OutGame, error) {
 			if err := g.userRepo.AddBalance(userID, game.Insurance*3); err != nil {
 				return nil, err
 			}
+
+			user.Balance += game.Insurance * 3
 		}
-		// ゲームを削除
-		if err := g.gameRepo.Delete(userID); err != nil {
-			return nil, err
-		}
-		return &OutGame{
-			GameData:       game,
-			UserData:       user,
-			IsEnd:          true,
-			IsInsuranceWin: true,
-		}, nil
 	}
 
 	// DealerのHandが17以上になるまでカードを引く
@@ -226,10 +218,15 @@ func (g *game) Stand(userID string, handID int) (*OutGame, error) {
 
 	// DealerのHandが21を超えたらBust
 	if game.DealerHand.IsBust() {
-		// ゲームを保存
-		if err := g.gameRepo.Update(*game); err != nil {
+		for _, uhand := range game.UserHand {
+			uhand.UpdateStatus(hand.StatusWin)
+		}
+
+		// ゲームの削除
+		if err := g.gameRepo.Delete(userID); err != nil {
 			return nil, err
 		}
+
 		// スプリットしてたらベット額を倍にする
 		if len(game.UserHand) == 2 {
 			game.BetAmount *= 2
@@ -238,6 +235,8 @@ func (g *game) Stand(userID string, handID int) (*OutGame, error) {
 		if err := g.userRepo.AddBalance(userID, game.BetAmount*2); err != nil {
 			return nil, err
 		}
+		user.Balance += game.BetAmount * 2
+
 		return &OutGame{
 			GameData: game,
 			UserData: user,
@@ -247,19 +246,23 @@ func (g *game) Stand(userID string, handID int) (*OutGame, error) {
 
 	// DealerのHandが21以下の場合、ユーザーのHandと比較する
 	for _, uhand := range game.UserHand {
-		// 既にBustしている場合はスキップ
-		if uhand.Status() > hand.StatusStand {
-			continue
-		}
-		// DealerのHandがユーザーのHandより大きい場合は負け
-		if game.DealerHand.Score() > uhand.Score() {
+		switch {
+		case game.DealerHand.Score() == uhand.Score():
+			uhand.UpdateStatus(hand.StatusDraw)
+			// 所持金更新
+			if err := g.userRepo.AddBalance(userID, game.BetAmount); err != nil {
+				return nil, err
+			}
+			user.Balance += game.BetAmount
+		case game.DealerHand.Score() > uhand.Score() || uhand.Score() > 21:
 			uhand.UpdateStatus(hand.StatusLose)
-		} else if game.DealerHand.Score() < uhand.Score() {
+		case game.DealerHand.Score() < uhand.Score() && uhand.Score() <= 21:
 			uhand.UpdateStatus(hand.StatusWin)
 			// 所持金更新
 			if err := g.userRepo.AddBalance(userID, game.BetAmount*2); err != nil {
 				return nil, err
 			}
+			user.Balance += game.BetAmount * 2
 		}
 	}
 

@@ -19,28 +19,23 @@ type Option func(*deck)
 func IgnoreJokers() Option {
 	return func(d *deck) {
 		d.ignoreJokers = true
-
-		for i, card := range d.cards {
-			if card.IsJoker() {
-				d.cards = append(d.cards[:i], d.cards[i+1:]...)
-			}
-		}
 	}
 }
 
 func New(deckSize int, opts ...Option) Deck {
-	var cards []card.Card
-	for i := 0; i < deckSize; i++ {
-		cards = append(cards, card.NewDeck()...)
-	}
-
-	deck := &deck{
-		cards: card.Shuffle(cards),
-	}
+	deck := &deck{}
 
 	for _, opt := range opts {
 		opt(deck)
 	}
+
+	var cards []card.Card
+	for i := 0; i < deckSize; i++ {
+		cards = append(cards, card.NewDeck(deck.ignoreJokers)...)
+	}
+
+	deck.cards = cards
+	deck.Shuffle()
 
 	return deck
 }

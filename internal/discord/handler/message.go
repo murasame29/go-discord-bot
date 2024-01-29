@@ -4,24 +4,19 @@ const (
 	SplitedHitMessage   = "ヒットしました。\nあなたの手札は [%s] [%s] です。合計値は %dと%dです。\n次の操作を行ってください"
 	SplitedStandMessage = "スタンドしました。\nあなたの手札は [%s] [%s] です。合計値は %dと%dです。\n次の操作を行ってください"
 
-	SplitedWinMessage  = "%d枚目の手札で勝ちました。\nあなたの手札は [%s] [%s]です。合計値は %dと%dです。\nディーラーの手札は [%s] です。"
-	SplitedLoseMessage = "%d枚目の手札で負けました。\nあなたの手札は [%s] [%s]です。合計値は %dと%dです。\nディーラーの手札は [%s] です。"
-	SplitedDrawMessage = "%d枚目の手札で引き分けました。\nあなたの手札は [%s] [%s]です。合計値は %dと%dです。\nディーラーの手札は [%s] です。"
+	SplitedWinMessage  = "%d枚目の手札で勝ちました。\nあなたの手札は [%s] [%s]です。合計値は %dと%dです。\nディーラーの手札は [%s] です。合計値は %dです。"
+	SplitedLoseMessage = "%d枚目の手札で負けました。\nあなたの手札は [%s] [%s]です。合計値は %dと%dです。\nディーラーの手札は [%s] です。。合計値は %dです。"
+	SplitedDrawMessage = "%d枚目の手札で引き分けました。\nあなたの手札は [%s] [%s]です。合計値は %dと%dです。\nディーラーの手札は [%s] です。。合計値は %dです。"
 
 	HitMessage   = "ヒットしました。\nあなたの手札は [%s] です。合計値は %d。\n次の操作を行ってください"
 	StandMessage = "スタンドしました。\nあなたの手札は [%s] です。合計値は %d。\n次の操作を行ってください"
 
-	WinMessage  = "あなたの勝ちです。\nあなたの手札は [%s] です。合計値は %d。\nディーラーの手札は [%s] です。合計値は %d。\nあなたの所持金は %dPです。"
-	LoseMessage = "あなたの負けです。\nあなたの手札は [%s] です。合計値は %d。\nディーラーの手札は [%s] です。合計値は %d。\nあなたの所持金は %dPです。"
-	DrawMessage = "引き分けです。\nあなたの手札は [%s] です。合計値は %d。\nディーラーの手札は [%s] です。合計値は %d。\nあなたの所持金は %dPです。"
-
 	InsuranceMessage    = "インシュランスしました。\nあなたの手札は [%s] です。合計値は %d。追加で %dP支払いました。\n あなたの所持金は %dPです。次の操作を行ってください"
 	InsuranceWinMessage = "インシュランスに勝ちました。\nあなたの手札は [%s] です。合計値は %d。\nディーラーの手札は [%s] です。合計値は %d。\nあなたの所持金は %dPです。"
 
-	BustMessage       = "バーストしました。\nあなたの手札は [%s] です。合計値は %d。\nディーラーの手札は [%s] です。合計値は %d。\nあなたの所持金は %dPです。"
-	SplitMessage      = "スプリットしました。\nあなたの手札は [%s] [%s] です。合計値は %dと%dです。\n次の操作を行ってください"
-	DoubleDownMessage = "ダブルダウンしました。\nあなたの手札は [%s] です。合計値は %d。"
-	SurrenderMessage  = "サレンダーしました。"
+	BustMessage      = "バーストしました。\nあなたの手札は [%s] です。合計値は %d。\nディーラーの手札は [%s] です。合計値は %d。\nあなたの所持金は %dPです。"
+	SplitMessage     = "スプリットしました。\nあなたの手札は [%s] [%s] です。合計値は %dと%dです。\n次の操作を行ってください"
+	SurrenderMessage = "サレンダーしました。"
 
 	// Result Message
 	WinResultMessage       = "あなたの勝ちです。"
@@ -60,8 +55,38 @@ var (
 		PlayerHandMessage,
 		NextStepMessage,
 	}
+
 	BJMessage = []string{
 		"おめでとうございます。ブラックジャックです。",
+		BalanceMessage,
+	}
+
+	DoubleDownMessage = []string{
+		"ダブルダウンします。",
+		PlayerHandMessage,
+		DealerHandMessage,
+		"%s", //Result win or lose
+		BalanceMessage,
+	}
+
+	WinMessage = []string{
+		WinResultMessage,
+		PlayerHandMessage,
+		DealerHandMessage,
+		BalanceMessage,
+	}
+
+	LoseMessage = []string{
+		LoseResultMessage,
+		PlayerHandMessage,
+		DealerHandMessage,
+		BalanceMessage,
+	}
+
+	DrawMessage = []string{
+		DrawResultMessage,
+		PlayerHandMessage,
+		DealerHandMessage,
 		BalanceMessage,
 	}
 )

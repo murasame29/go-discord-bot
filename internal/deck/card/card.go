@@ -89,7 +89,7 @@ func New(suit Suite, rank int) Card {
 	return card{suit: suit, rank: rank}
 }
 
-func NewDeck() []Card {
+func NewDeck(ignoreJokers bool) []Card {
 	cards := []Card{}
 
 	// Add 4 suite of cards
@@ -99,8 +99,10 @@ func NewDeck() []Card {
 		}
 	}
 	// Add 2 jokers
-	cards = append(cards, New("", Joker))
-	cards = append(cards, New("", Joker))
+	if !ignoreJokers {
+		cards = append(cards, New("", Joker))
+		cards = append(cards, New("", Joker))
+	}
 
 	return cards
 }

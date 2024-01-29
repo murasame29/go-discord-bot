@@ -6,7 +6,7 @@ import (
 )
 
 func TestNewDeck(t *testing.T) {
-	cards := NewDeck()
+	cards := NewDeck(false)
 
 	if len(cards) != 54 {
 		t.Errorf("Expected 52 cards, got %d", len(cards))
