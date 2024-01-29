@@ -98,14 +98,14 @@ func (h *handler) startGame(s *discordgo.Session, m *discordgo.MessageCreate) {
 			userHandValue += hand.Score()
 		}
 
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(BJMessage, strings.Join(hands, ", "), userHandValue, out.UserData.Balance))
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(strings.Join(StartGameMessage, "\n"), strings.Join(hands, ", "), userHandValue, out.UserData.Balance))
 		return
 	}
 
 	hands = append(hands, fmt.Sprintf("%s", strings.Join(out.GameData.UserHand[0].Strings(), ", ")))
 	userHandValue += out.GameData.UserHand[0].Score()
 
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(StartMessage, out.GameData.BetAmount, out.UserData.Balance, out.GameData.DealerHand.Strings()[0], out.GameData.DealerHand.RawCards()[0].BJscore(), strings.Join(hands, ", "), userHandValue))
+	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(strings.Join(StartGameMessage, "\n"), out.GameData.BetAmount, out.UserData.Balance, out.GameData.DealerHand.Strings()[0], out.GameData.DealerHand.RawCards()[0].BJscore(), strings.Join(hands, ", "), userHandValue))
 }
 
 func (h *handler) hit(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -220,14 +220,19 @@ func (h *handler) stand(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(InsuranceWinMessage, strings.Join(out.GameData.UserHand[0].Strings(), ", "), out.GameData.UserHand[0].Score(), out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
 		}
 
+		for _, hand := range out.GameData.UserHand {
+			hands = append(hands, hand.Strings())
+			userHandValue = append(userHandValue, hand.Score())
+		}
+
 		// 勝敗判定
 		switch out.GameData.UserHand[0].Status() {
 		case hand.StatusWin:
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(WinMessage, strings.Join(hands[0], ", "), strings.Join(hands[1], ", "), userHandValue[0], userHandValue[1], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(WinMessage, strings.Join(hands[0], ", "), userHandValue[0], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
 		case hand.StatusLose:
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(LoseMessage, strings.Join(hands[0], ", "), strings.Join(hands[1], ", "), userHandValue[0], userHandValue[1], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(LoseMessage, strings.Join(hands[0], ", "), userHandValue[0], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
 		case hand.StatusDraw:
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(DrawMessage, strings.Join(hands[0], ", "), strings.Join(hands[1], ", "), userHandValue[0], userHandValue[1], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(DrawMessage, strings.Join(hands[0], ", "), userHandValue[0], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
 		}
 		return
 	}

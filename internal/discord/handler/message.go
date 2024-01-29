@@ -1,9 +1,6 @@
 package handler
 
 const (
-	StartMessage = "%dP賭けてゲームを開始します。\nあなたの所持金は%dPです。\nディーラーのカードは [%s]です。 合計値は %d。\nあなたの手札は [%s] です。合計値は %d。\n次の操作を行ってください"
-	BJMessage    = "おめでとうございます。ブラックジャックです。\nあなたの手札は [%s] です。合計値は %d。\nあなたの所持金は %dPです。"
-
 	SplitedHitMessage   = "ヒットしました。\nあなたの手札は [%s] [%s] です。合計値は %dと%dです。\n次の操作を行ってください"
 	SplitedStandMessage = "スタンドしました。\nあなたの手札は [%s] [%s] です。合計値は %dと%dです。\n次の操作を行ってください"
 
@@ -26,6 +23,17 @@ const (
 	DoubleDownMessage = "ダブルダウンしました。\nあなたの手札は [%s] です。合計値は %d。"
 	SurrenderMessage  = "サレンダーしました。"
 
+	// Result Message
+	WinResultMessage       = "あなたの勝ちです。"
+	LoseResultMessage      = "あなたの負けです。"
+	DrawResultMessage      = "引き分けです。"
+	SurrenderResultMessage = "サレンダーしました。"
+
+	// Hand Message
+	PlayerHandMessage        = "あなたの手札は [%s] です。合計値は %d。"
+	SplitedPlayerHandMessage = "あなたの手札は [%s] [%s] です。合計値は %dと%dです。"
+	DealerHandMessage        = "ディーラーの手札は [%s] です。合計値は %d。"
+
 	// Template Message
 	BalanceMessage  = "あなたの所持金は %dPです。"
 	NextStepMessage = "次の操作を行ってください"
@@ -40,4 +48,20 @@ const (
 	NoStandMessage     = "スタンドできません。次の操作を行ってください"
 	NoBetMessage       = "賭け金を設定してください。"
 	NoStartMessage     = "ゲームを開始してください。"
+)
+
+var (
+	// Result Message
+	StartGameMessage = []string{
+		"ゲームを開始します。",
+		"%dP賭けてゲームを開始します。",
+		BalanceMessage,
+		DealerHandMessage,
+		PlayerHandMessage,
+		NextStepMessage,
+	}
+	BJMessage = []string{
+		"おめでとうございます。ブラックジャックです。",
+		BalanceMessage,
+	}
 )

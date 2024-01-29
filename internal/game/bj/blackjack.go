@@ -405,6 +405,8 @@ func (g *game) Insurance(userID string, insurance int64) (*OutGame, error) {
 		return nil, models.ErrBadCommand
 	}
 
+	game.Insurance = insurance
+
 	// ゲームを保存
 	if err := g.gameRepo.Update(*game); err != nil {
 		return nil, err
@@ -415,7 +417,13 @@ func (g *game) Insurance(userID string, insurance int64) (*OutGame, error) {
 		return nil, err
 	}
 
-	return g.Stand(userID, 0)
+	user.Balance -= insurance
+
+	return &OutGame{
+		GameData: game,
+		UserData: user,
+		IsEnd:    false,
+	}, nil
 }
 
 func checkAllHandStand(game models.BlackJack) bool {
