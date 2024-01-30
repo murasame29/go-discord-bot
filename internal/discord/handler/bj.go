@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,13 +12,20 @@ import (
 )
 
 const (
+	// CommandStart is a message that is sent when the game starts.
 	CommandStart = "!bj"
-	CommandHit   = "!hit"
+	// CommandHit is a message that is sent when the user hits.
+	CommandHit = "!hit"
+	// CommandStand is a message that is sent when the user stands.
 	CommandStand = "!stand"
+	// CommandSplit is a message that is sent when the user splits.
 	CommandSplit = "!split"
-	CommandDD    = "!dd"
-	CommandIns   = "!ins"
-	CommandSur   = "!sur"
+	// CommandDD is a message that is sent when the user double downs.
+	CommandDD = "!dd"
+	// CommandIns is a message that is sent when the user insurances.
+	CommandIns = "!ins"
+	// CommandSur is a message that is sent when the user surrenders.
+	CommandSur = "!sur"
 )
 
 func (h *handler) Blackjack() {
@@ -52,9 +60,11 @@ func (h *handler) startGame(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if _, err := h.userRepo.Get(m.Author.ID); err != nil {
+	ctx := context.Background()
+
+	if _, err := h.userRepo.Get(ctx, m.Author.ID); err != nil {
 		s.ChannelMessageSend(m.ChannelID, "初めて見る顔ですね。勝手に登録しておきます。所持金は1000です。")
-		if err := h.userRepo.Create(models.User{
+		if err := h.userRepo.Create(ctx, models.User{
 			ID:          m.Author.ID,
 			DisplayName: m.Author.Username,
 			Balance:     1000,
@@ -81,7 +91,7 @@ func (h *handler) startGame(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	out, err := h.bj.Start(m.Author.ID, int64(betAmount))
+	out, err := h.bj.Start(ctx, m.Author.ID, int64(betAmount))
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
@@ -112,8 +122,9 @@ func (h *handler) hit(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
+	ctx := context.Background()
 
-	out, err := h.bj.Hit(m.Author.ID)
+	out, err := h.bj.Hit(ctx, m.Author.ID)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
@@ -157,6 +168,7 @@ func (h *handler) stand(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	ctx := context.Background()
 	var (
 		handID int = 1
 		err    error
@@ -171,7 +183,7 @@ func (h *handler) stand(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	out, err := h.bj.Stand(m.Author.ID, handID-1)
+	out, err := h.bj.Stand(ctx, m.Author.ID, handID-1)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
@@ -246,8 +258,9 @@ func (h *handler) split(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
+	ctx := context.Background()
 
-	out, err := h.bj.Split(m.Author.ID)
+	out, err := h.bj.Split(ctx, m.Author.ID)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
@@ -271,7 +284,8 @@ func (h *handler) doubleDown(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	out, err := h.bj.DoubleDown(m.Author.ID)
+	ctx := context.Background()
+	out, err := h.bj.DoubleDown(ctx, m.Author.ID)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
@@ -303,6 +317,7 @@ func (h *handler) insurance(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
+	ctx := context.Background()
 	args := strings.Split(m.Content, " ")
 
 	if len(args) != 2 {
@@ -316,7 +331,7 @@ func (h *handler) insurance(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	out, err := h.bj.Insurance(m.Author.ID, int64(betAmount))
+	out, err := h.bj.Insurance(ctx, m.Author.ID, int64(betAmount))
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
@@ -339,8 +354,8 @@ func (h *handler) surrender(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-
-	out, err := h.bj.Surrender(m.Author.ID)
+	ctx := context.Background()
+	out, err := h.bj.Surrender(ctx, m.Author.ID)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return

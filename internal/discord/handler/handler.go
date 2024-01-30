@@ -9,13 +9,15 @@ import (
 type handler struct {
 	dg       *discordgo.Session
 	userRepo repository.UserRepo
-	gameRepo repository.GameRepo
+	gameRepo repository.BjRepo
 	bj       bj.Game
 }
 
-func New(dg *discordgo.Session,
+// New returns a new instance of handler.
+func New(
+	dg *discordgo.Session,
 	userRepo repository.UserRepo,
-	gameRepo repository.GameRepo) *handler {
+	gameRepo repository.BjRepo) *handler {
 	return &handler{
 		dg:       dg,
 		userRepo: userRepo,
