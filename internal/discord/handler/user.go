@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -9,6 +10,7 @@ import (
 
 func (h *handler) SetupUsers() {
 	h.dg.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		ctx := context.Background()
 		if m.Author.ID == s.State.User.ID {
 			return
 		}
@@ -22,7 +24,7 @@ func (h *handler) SetupUsers() {
 
 			for _, member := range guild.Members {
 				// Add member to database
-				err := h.userRepo.Create(models.User{
+				err := h.userRepo.Create(ctx, models.User{
 					ID:          member.User.ID,
 					DisplayName: member.User.Username,
 					Balance:     1000,

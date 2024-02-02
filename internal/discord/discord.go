@@ -8,7 +8,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/murasame29/casino-bot/internal/discord/handler"
-	"github.com/murasame29/casino-bot/internal/repository/mock"
+	"github.com/murasame29/casino-bot/internal/repository/memory"
 )
 
 type discord struct {
@@ -27,8 +27,8 @@ func (d *discord) Start() error {
 		return err
 	}
 
-	userRepo := mock.NewUserRepo()
-	gameRepo := mock.NewGameRepo()
+	userRepo := memory.NewUserRepo()
+	gameRepo := memory.NewGameRepo()
 
 	// handler を呼び出す
 	h := handler.New(dg, userRepo, gameRepo)

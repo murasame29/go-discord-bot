@@ -1,6 +1,8 @@
 package bj
 
 import (
+	"context"
+
 	"github.com/murasame29/casino-bot/internal/deck"
 	"github.com/murasame29/casino-bot/internal/game/bj/hand"
 	"github.com/murasame29/casino-bot/internal/models"
@@ -8,29 +10,29 @@ import (
 )
 
 type game struct {
-	gameRepo repository.GameRepo
+	gameRepo repository.BjRepo
 	userRepo repository.UserRepo
 }
 
 type Game interface {
-	Start(userID string, betAmount int64) (*OutGame, error)
-	Hit(userID string) (*OutGame, error)
-	Stand(userID string, handID int) (*OutGame, error)
-	DoubleDown(userID string) (*OutGame, error)
-	Split(userID string) (*OutGame, error)
-	Surrender(userID string) (*OutGame, error)
-	Insurance(userID string, insurance int64) (*OutGame, error)
+	Start(ctx context.Context, userID string, betAmount int64) (*OutGame, error)
+	Hit(ctx context.Context, userID string) (*OutGame, error)
+	Stand(ctx context.Context, userID string, handID int) (*OutGame, error)
+	DoubleDown(ctx context.Context, userID string) (*OutGame, error)
+	Split(ctx context.Context, userID string) (*OutGame, error)
+	Surrender(ctx context.Context, userID string) (*OutGame, error)
+	Insurance(ctx context.Context, userID string, insurance int64) (*OutGame, error)
 }
 
-func NewGame(gameRepo repository.GameRepo, userRepo repository.UserRepo) Game {
+func NewGame(gameRepo repository.BjRepo, userRepo repository.UserRepo) Game {
 	return &game{
 		gameRepo: gameRepo,
 		userRepo: userRepo,
 	}
 }
 
-func (g *game) Start(userID string, betAmount int64) (*OutGame, error) {
-	user, err := g.userRepo.Get(userID)
+func (g *game) Start(ctx context.Context, userID string, betAmount int64) (*OutGame, error) {
+	user, err := g.userRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +43,7 @@ func (g *game) Start(userID string, betAmount int64) (*OutGame, error) {
 	}
 
 	// ゲームが進行中の場合はエラー
-	if _, err = g.gameRepo.Get(userID); err != models.ErrGameNotFound {
+	if _, err = g.gameRepo.Get(ctx, userID); err != models.ErrGameNotFound {
 		return nil, models.ErrGameDuplicate
 	}
 
@@ -64,12 +66,12 @@ func (g *game) Start(userID string, betAmount int64) (*OutGame, error) {
 	// PlayerがBlackJackの場合はゲームを終了する
 	if game.UserHand[0].IsBlackJack() {
 		// ゲームを削除
-		if err := g.gameRepo.Delete(userID); err != nil {
+		if err := g.gameRepo.Delete(ctx, userID); err != nil {
 			return nil, err
 		}
 
 		// ユーザーの所持金を更新
-		if err := g.userRepo.AddBalance(userID, betAmount*2); err != nil {
+		if err := g.userRepo.AddBalance(ctx, userID, betAmount*2); err != nil {
 			return nil, err
 		}
 
@@ -81,12 +83,12 @@ func (g *game) Start(userID string, betAmount int64) (*OutGame, error) {
 	}
 
 	// ゲームを保存
-	if err := g.gameRepo.Create(game); err != nil {
+	if err := g.gameRepo.Create(ctx, game); err != nil {
 		return nil, err
 	}
 
 	// ユーザーの所持金を更新
-	if err := g.userRepo.AddBalance(userID, -betAmount); err != nil {
+	if err := g.userRepo.AddBalance(ctx, userID, -betAmount); err != nil {
 		return nil, err
 	}
 
@@ -97,13 +99,13 @@ func (g *game) Start(userID string, betAmount int64) (*OutGame, error) {
 	}, nil
 }
 
-func (g *game) Hit(userID string) (*OutGame, error) {
-	user, err := g.userRepo.Get(userID)
+func (g *game) Hit(ctx context.Context, userID string) (*OutGame, error) {
+	user, err := g.userRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	game, err := g.gameRepo.Get(userID)
+	game, err := g.gameRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, models.ErrGameNotAvailable
 	}
@@ -120,7 +122,7 @@ func (g *game) Hit(userID string) (*OutGame, error) {
 	// Splitしてない状態でBustしたらゲームを終了する
 	if len(game.UserHand) == 1 && game.UserHand[0].IsBust() {
 		// ゲームを削除
-		if err := g.gameRepo.Delete(userID); err != nil {
+		if err := g.gameRepo.Delete(ctx, userID); err != nil {
 			return nil, err
 		}
 
@@ -144,7 +146,7 @@ func (g *game) Hit(userID string) (*OutGame, error) {
 
 		if isAllBust {
 			// ゲームを削除
-			if err := g.gameRepo.Delete(userID); err != nil {
+			if err := g.gameRepo.Delete(ctx, userID); err != nil {
 				return nil, err
 			}
 
@@ -157,7 +159,7 @@ func (g *game) Hit(userID string) (*OutGame, error) {
 	}
 
 	// ゲームを保存
-	if err := g.gameRepo.Update(*game); err != nil {
+	if err := g.gameRepo.Update(ctx, *game); err != nil {
 		return nil, err
 	}
 
@@ -168,13 +170,13 @@ func (g *game) Hit(userID string) (*OutGame, error) {
 	}, nil
 }
 
-func (g *game) Stand(userID string, handID int) (*OutGame, error) {
-	user, err := g.userRepo.Get(userID)
+func (g *game) Stand(ctx context.Context, userID string, handID int) (*OutGame, error) {
+	user, err := g.userRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	game, err := g.gameRepo.Get(userID)
+	game, err := g.gameRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, models.ErrGameNotAvailable
 	}
@@ -189,7 +191,7 @@ func (g *game) Stand(userID string, handID int) (*OutGame, error) {
 	// 全ての手札がStandになっていない場合はゲームを続行する
 	if !checkAllHandStand(*game) {
 		// ゲームを保存
-		if err := g.gameRepo.Update(*game); err != nil {
+		if err := g.gameRepo.Update(ctx, *game); err != nil {
 			return nil, err
 		}
 		return &OutGame{
@@ -203,7 +205,7 @@ func (g *game) Stand(userID string, handID int) (*OutGame, error) {
 		// 保険があれば支払う
 		if game.Insurance != 0 {
 			// ユーザーの所持金を更新
-			if err := g.userRepo.AddBalance(userID, game.Insurance*3); err != nil {
+			if err := g.userRepo.AddBalance(ctx, userID, game.Insurance*3); err != nil {
 				return nil, err
 			}
 
@@ -223,7 +225,7 @@ func (g *game) Stand(userID string, handID int) (*OutGame, error) {
 		}
 
 		// ゲームの削除
-		if err := g.gameRepo.Delete(userID); err != nil {
+		if err := g.gameRepo.Delete(ctx, userID); err != nil {
 			return nil, err
 		}
 
@@ -232,7 +234,7 @@ func (g *game) Stand(userID string, handID int) (*OutGame, error) {
 			game.BetAmount *= 2
 		}
 		// ユーザーの所持金を更新
-		if err := g.userRepo.AddBalance(userID, game.BetAmount*2); err != nil {
+		if err := g.userRepo.AddBalance(ctx, userID, game.BetAmount*2); err != nil {
 			return nil, err
 		}
 		user.Balance += game.BetAmount * 2
@@ -250,7 +252,7 @@ func (g *game) Stand(userID string, handID int) (*OutGame, error) {
 		case game.DealerHand.Score() == uhand.Score():
 			uhand.UpdateStatus(hand.StatusDraw)
 			// 所持金更新
-			if err := g.userRepo.AddBalance(userID, game.BetAmount); err != nil {
+			if err := g.userRepo.AddBalance(ctx, userID, game.BetAmount); err != nil {
 				return nil, err
 			}
 			user.Balance += game.BetAmount
@@ -259,7 +261,7 @@ func (g *game) Stand(userID string, handID int) (*OutGame, error) {
 		case game.DealerHand.Score() < uhand.Score() && uhand.Score() <= 21:
 			uhand.UpdateStatus(hand.StatusWin)
 			// 所持金更新
-			if err := g.userRepo.AddBalance(userID, game.BetAmount*2); err != nil {
+			if err := g.userRepo.AddBalance(ctx, userID, game.BetAmount*2); err != nil {
 				return nil, err
 			}
 			user.Balance += game.BetAmount * 2
@@ -267,7 +269,7 @@ func (g *game) Stand(userID string, handID int) (*OutGame, error) {
 	}
 
 	// ゲームを削除
-	if err := g.gameRepo.Delete(userID); err != nil {
+	if err := g.gameRepo.Delete(ctx, userID); err != nil {
 		return nil, err
 	}
 
@@ -278,13 +280,13 @@ func (g *game) Stand(userID string, handID int) (*OutGame, error) {
 	}, nil
 }
 
-func (g *game) DoubleDown(userID string) (*OutGame, error) {
-	user, err := g.userRepo.Get(userID)
+func (g *game) DoubleDown(ctx context.Context, userID string) (*OutGame, error) {
+	user, err := g.userRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	game, err := g.gameRepo.Get(userID)
+	game, err := g.gameRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, models.ErrGameNotAvailable
 	}
@@ -303,25 +305,25 @@ func (g *game) DoubleDown(userID string) (*OutGame, error) {
 	game.UserHand[0].Add(game.Deck.Draw())
 
 	// ゲームを保存
-	if err := g.gameRepo.Update(*game); err != nil {
+	if err := g.gameRepo.Update(ctx, *game); err != nil {
 		return nil, err
 	}
 
 	// ユーザーの所持金を更新
-	if err := g.userRepo.AddBalance(userID, -game.BetAmount); err != nil {
+	if err := g.userRepo.AddBalance(ctx, userID, -game.BetAmount); err != nil {
 		return nil, err
 	}
 
-	return g.Stand(userID, 0)
+	return g.Stand(ctx, userID, 0)
 }
 
-func (g *game) Split(userID string) (*OutGame, error) {
-	user, err := g.userRepo.Get(userID)
+func (g *game) Split(ctx context.Context, userID string) (*OutGame, error) {
+	user, err := g.userRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	game, err := g.gameRepo.Get(userID)
+	game, err := g.gameRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, models.ErrGameNotAvailable
 	}
@@ -340,12 +342,12 @@ func (g *game) Split(userID string) (*OutGame, error) {
 	game.UserHand = game.UserHand[0].SplitHand()
 
 	// ゲームを保存
-	if err := g.gameRepo.Update(*game); err != nil {
+	if err := g.gameRepo.Update(ctx, *game); err != nil {
 		return nil, err
 	}
 
 	// ユーザーの所持金を更新
-	if err := g.userRepo.AddBalance(userID, -game.BetAmount); err != nil {
+	if err := g.userRepo.AddBalance(ctx, userID, -game.BetAmount); err != nil {
 		return nil, err
 	}
 
@@ -355,24 +357,24 @@ func (g *game) Split(userID string) (*OutGame, error) {
 	}, nil
 }
 
-func (g *game) Surrender(userID string) (*OutGame, error) {
-	user, err := g.userRepo.Get(userID)
+func (g *game) Surrender(ctx context.Context, userID string) (*OutGame, error) {
+	user, err := g.userRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	game, err := g.gameRepo.Get(userID)
+	game, err := g.gameRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, models.ErrGameNotAvailable
 	}
 
 	// ゲームを削除
-	if err := g.gameRepo.Delete(userID); err != nil {
+	if err := g.gameRepo.Delete(ctx, userID); err != nil {
 		return nil, err
 	}
 
 	// ユーザーの所持金を更新
-	if err := g.userRepo.AddBalance(userID, game.BetAmount/2); err != nil {
+	if err := g.userRepo.AddBalance(ctx, userID, game.BetAmount/2); err != nil {
 		return nil, err
 	}
 
@@ -382,13 +384,13 @@ func (g *game) Surrender(userID string) (*OutGame, error) {
 	}, nil
 }
 
-func (g *game) Insurance(userID string, insurance int64) (*OutGame, error) {
-	user, err := g.userRepo.Get(userID)
+func (g *game) Insurance(ctx context.Context, userID string, insurance int64) (*OutGame, error) {
+	user, err := g.userRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	game, err := g.gameRepo.Get(userID)
+	game, err := g.gameRepo.Get(ctx, userID)
 	if err != nil {
 		return nil, models.ErrGameNotAvailable
 	}
@@ -411,12 +413,12 @@ func (g *game) Insurance(userID string, insurance int64) (*OutGame, error) {
 	game.Insurance = insurance
 
 	// ゲームを保存
-	if err := g.gameRepo.Update(*game); err != nil {
+	if err := g.gameRepo.Update(ctx, *game); err != nil {
 		return nil, err
 	}
 
 	// ユーザーの所持金を更新
-	if err := g.userRepo.AddBalance(userID, -insurance); err != nil {
+	if err := g.userRepo.AddBalance(ctx, userID, -insurance); err != nil {
 		return nil, err
 	}
 

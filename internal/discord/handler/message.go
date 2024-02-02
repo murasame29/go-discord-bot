@@ -1,5 +1,6 @@
 package handler
 
+// TODO:整理する
 const (
 	SplitedHitMessage   = "ヒットしました。\nあなたの手札は [%s] [%s] です。合計値は %dと%dです。\n次の操作を行ってください"
 	SplitedStandMessage = "スタンドしました。\nあなたの手札は [%s] [%s] です。合計値は %dと%dです。\n次の操作を行ってください"
