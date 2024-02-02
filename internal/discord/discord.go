@@ -33,6 +33,7 @@ func (d *discord) Start() error {
 	// handler を呼び出す
 	h := handler.New(dg, userRepo, gameRepo)
 
+	h.Help()
 	// ユーザーの登録
 	h.SetupUsers()
 	// BlackJackの登録

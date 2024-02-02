@@ -12,12 +12,12 @@ import (
 
 const (
 	CommandStart = "!bj"
-	CommandHit   = "!hit"
-	CommandStand = "!stand"
-	CommandSplit = "!split"
-	CommandDD    = "!dd"
-	CommandIns   = "!ins"
-	CommandSur   = "!sur"
+	CommandHit   = "!bj-hit"
+	CommandStand = "!bj-stand"
+	CommandSplit = "!bj-split"
+	CommandDD    = "!bj-dd"
+	CommandIns   = "!bj-ins"
+	CommandSur   = "!bj-sur"
 )
 
 func (h *handler) Blackjack() {

@@ -13,6 +13,7 @@ type handler struct {
 	bj       bj.Game
 }
 
+// New returns a new handler
 func New(dg *discordgo.Session,
 	userRepo repository.UserRepo,
 	gameRepo repository.GameRepo) *handler {
