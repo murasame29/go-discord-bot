@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/murasame29/casino-bot/internal/game/bj/hand"
@@ -111,6 +112,7 @@ func (h *handler) startGame(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// 開始早々BJの場合
 	if out.IsEnd {
 		s.ChannelMessageSend(channelID, fmt.Sprintf(strings.Join(BJMessage, "\n"), out.UserData.Balance))
+		h.deleteChannel(s, channelID)
 	} else {
 		s.ChannelMessageSend(channelID, NextStepMessage)
 	}
@@ -141,6 +143,7 @@ func (h *handler) hit(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(BustMessage, strings.Join(hands[0], ", "), userHandValue[0], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
+		h.deleteChannel(s, m.ChannelID)
 		return
 	}
 
@@ -210,6 +213,7 @@ func (h *handler) stand(s *discordgo.Session, m *discordgo.MessageCreate) {
 					s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(SplitedDrawMessage, i+1, strings.Join(hands[0], ", "), strings.Join(hands[1], ", "), userHandValue[0], userHandValue[1], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score()))
 				}
 			}
+			h.deleteChannel(s, m.ChannelID)
 			return
 		}
 
@@ -244,6 +248,7 @@ func (h *handler) stand(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case hand.StatusDraw:
 			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(strings.Join(DrawMessage, "\n"), strings.Join(hands[0], ", "), userHandValue[0], out.GameData.DealerHand.Strings(), out.GameData.DealerHand.Score(), out.UserData.Balance))
 		}
+		h.deleteChannel(s, m.ChannelID)
 		return
 	}
 	hands = append(hands, out.GameData.UserHand[0].Strings())
@@ -370,4 +375,10 @@ func (h *handler) surrender(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	s.ChannelMessageSend(m.ChannelID, SurrenderMessage)
+	h.deleteChannel(s, m.ChannelID)
+}
+
+func (h *handler) deleteChannel(s *discordgo.Session, id string) {
+	time.Sleep(1 * time.Minute)
+	s.ChannelDelete(id)
 }
