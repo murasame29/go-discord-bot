@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -56,38 +57,44 @@ func (h *handler) startGame(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	ctx := context.Background()
 
+	th, err := s.MessageThreadStart(m.ChannelID, m.ID, fmt.Sprintf("BlackJack-%s", m.Author.ID), 0)
+	if err != nil {
+		log.Println(err)
+	}
+	channelID := th.ID
+
 	if _, err := h.userRepo.Get(ctx, m.Author.ID); err != nil {
-		s.ChannelMessageSend(m.ChannelID, "初めて見る顔ですね。勝手に登録しておきます。所持金は1000です。")
+		s.ChannelMessageSend(channelID, "初めて見る顔ですね。勝手に登録しておきます。所持金は1000です。")
 		if err := h.userRepo.Create(ctx, models.User{
 			ID:          m.Author.ID,
 			DisplayName: m.Author.Username,
 			Balance:     1000,
 		}); err != nil {
-			s.ChannelMessageSend(m.ChannelID, "登録に失敗しました。")
+			s.ChannelMessageSend(channelID, "登録に失敗しました。")
 			return
 		}
 
-		s.ChannelMessageSend(m.ChannelID, "登録が完了しました。")
+		s.ChannelMessageSend(channelID, "登録が完了しました。")
 	}
 
-	s.ChannelMessageSend(m.ChannelID, "BlackJackを開始します。")
+	s.ChannelMessageSend(channelID, "BlackJackを開始します。")
 
 	args := strings.Split(m.Content, " ")
 
 	if len(args) != 2 {
-		s.ChannelMessageSend(m.ChannelID, "コマンドが誤っています \n 100を賭ける場合は !bh 100 と入力してください。")
+		s.ChannelMessageSend(channelID, "コマンドが誤っています \n 100を賭ける場合は !bh 100 と入力してください。")
 		return
 	}
 
 	betAmount, err := strconv.Atoi(args[1])
 	if err != nil || betAmount < 1 {
-		s.ChannelMessageSend(m.ChannelID, "賭け金が不正です。 1以上の整数を入力してください。")
+		s.ChannelMessageSend(channelID, "賭け金が不正です。 1以上の整数を入力してください。")
 		return
 	}
 
 	out, err := h.bj.Start(ctx, m.Author.ID, int64(betAmount))
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, err.Error())
+		s.ChannelMessageSend(channelID, err.Error())
 		return
 	}
 
@@ -95,21 +102,18 @@ func (h *handler) startGame(s *discordgo.Session, m *discordgo.MessageCreate) {
 		hands         []string
 		userHandValue int
 	)
-	// 開始早々BJの場合
-	if out.IsEnd {
-		for _, hand := range out.GameData.UserHand {
-			hands = append(hands, strings.Join(hand.Strings(), ", "))
-			userHandValue += hand.Score()
-		}
-
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(strings.Join(StartGameMessage, "\n"), strings.Join(hands, ", "), userHandValue, out.UserData.Balance))
-		return
-	}
 
 	hands = append(hands, fmt.Sprintf("%s", strings.Join(out.GameData.UserHand[0].Strings(), ", ")))
 	userHandValue += out.GameData.UserHand[0].Score()
 
-	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf(strings.Join(StartGameMessage, "\n"), out.GameData.BetAmount, out.UserData.Balance, out.GameData.DealerHand.Strings()[0], out.GameData.DealerHand.RawCards()[0].BJscore(), strings.Join(hands, ", "), userHandValue))
+	s.ChannelMessageSend(channelID, fmt.Sprintf(strings.Join(StartGameMessage, "\n"), out.GameData.BetAmount, out.UserData.Balance, out.GameData.DealerHand.Strings()[0], out.GameData.DealerHand.RawCards()[0].BJscore(), strings.Join(hands, ", "), userHandValue))
+
+	// 開始早々BJの場合
+	if out.IsEnd {
+		s.ChannelMessageSend(channelID, fmt.Sprintf(strings.Join(BJMessage, "\n"), out.UserData.Balance))
+	} else {
+		s.ChannelMessageSend(channelID, NextStepMessage)
+	}
 }
 
 func (h *handler) hit(s *discordgo.Session, m *discordgo.MessageCreate) {

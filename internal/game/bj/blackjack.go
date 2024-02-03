@@ -304,6 +304,19 @@ func (g *game) DoubleDown(ctx context.Context, userID string) (*OutGame, error) 
 	// カードを引く
 	game.UserHand[0].Add(game.Deck.Draw())
 
+	if game.UserHand[0].IsBust() {
+		// ゲームを削除
+		if err := g.gameRepo.Delete(ctx, userID); err != nil {
+			return nil, err
+		}
+
+		return &OutGame{
+			GameData: game,
+			UserData: user,
+			IsEnd:    true,
+		}, nil
+	}
+
 	// ゲームを保存
 	if err := g.gameRepo.Update(ctx, *game); err != nil {
 		return nil, err

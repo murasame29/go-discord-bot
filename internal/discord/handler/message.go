@@ -54,7 +54,6 @@ var (
 		BalanceMessage,
 		DealerHandMessage,
 		PlayerHandMessage,
-		NextStepMessage,
 	}
 
 	BJMessage = []string{

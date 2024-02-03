@@ -128,11 +128,7 @@ func (h *hand) IsBlackJack() bool {
 		return false
 	}
 
-	if h.cards[0].Rank() == 1 && h.cards[1].Rank() == 10 {
-		return true
-	}
-
-	if h.cards[0].Rank() == 10 && h.cards[1].Rank() == 1 {
+	if h.Score() == 21 {
 		return true
 	}
 
